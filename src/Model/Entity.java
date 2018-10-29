@@ -3,7 +3,7 @@ package Model;
 //The Entity Class
 //The parent for all children entities, this class is only instantiated for blank spaces
 //all other Entities will be children of this class
-//Outline Author: Kyle Smith
+//Author: Hamna Nimra
 public class Entity {
 	
 	//Entity information
@@ -18,6 +18,7 @@ public class Entity {
 	//Positional information
 	private int column;
 	private int row;
+	
 	//Constructor for most subclasses
 	public Entity(float Health, float Defense, float AttackDamage, int RangeX,int RangeY, int Value)
 	{
@@ -33,6 +34,7 @@ public class Entity {
 	//Constructor for EMPTY SPACES
 	public Entity()
 	{
+		setType(100);
 	}
 	//To string method, in case the user calls status on an empty space
 	@Override
@@ -53,7 +55,65 @@ public class Entity {
 	public boolean Attack(Entity target)
 	{
 		boolean retValue = false;
+		if (isInRange(target) && !attacked)
+		{
+			retValue = true;
+			float targetHP = target.getHealth();
+			targetHP = targetHP - (this.attackDamage/target.getDefense());
+			target.setHealth(targetHP);
+			setAttacked(true);
+		}
 		return retValue;
+	}
+	//Checks if the target is within range of this entity
+	public boolean isInRange(Entity target)
+	{
+		boolean retVal = false;
+		
+		if (checkX(target.getColumn()) && checkY(target.getRow()))
+		{
+			retVal = true;
+		}
+		
+		return retVal;
+	}
+	//checks the range up and down the rows
+	private boolean checkY(int targetRow) {
+		boolean retVal = false;
+		if (targetRow >= this.getRow())
+		{
+			if ((targetRow - this.getRow()) <= this.getRangeY())
+			{
+				retVal = true;
+			}
+		}
+		else
+		{
+			if ((this.getRow() - targetRow) <= this.getRangeY())
+			{
+				retVal = true;
+			}
+		}
+		return retVal;
+	}
+	//checks the range across the columns
+	private boolean checkX(int targetColumn) {
+		boolean retVal = false;
+		if (targetColumn >= this.getColumn())
+		{
+			if((targetColumn - this.getColumn()) <= this.getRangeX())
+			{
+				retVal = true;
+			}
+		}
+		else
+		{
+			if((this.getColumn() - targetColumn) <= this.getRangeX())
+			{
+				retVal = true;
+			}
+		}
+		return retVal;
 	}
 	//what happens when the turnPasses, children will override this and call super.turnpass
 	//then they can also do anything they need to do  I.E sunflower soak reset

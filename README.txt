@@ -7,6 +7,7 @@ Version 1.0.1
 
 README Author and all supporting diagrams author: Manel Oudjida
 
+
 This is the overview of game mechanics. Feel free to add more just make sure you update the version like i did at the top.
 All versions 1.x.y is for the first milestone. Increase Y if only minor changes were made, X for major.
 

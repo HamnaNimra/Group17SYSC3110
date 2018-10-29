@@ -1,4 +1,3 @@
-# Group17SYSC3110
 /*
 README.txt
 Version 1.0

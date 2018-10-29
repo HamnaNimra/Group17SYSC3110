@@ -49,6 +49,32 @@ public class Game {
 		//save Model and View
 		Map = map;
 		View = view;
+		//Main Menu of sorts
+		view.showMessage("Welcome to Plants vs. Zombies by Group 17");
+		view.showMessage("Currently the game only features 2 types of plants and one type of zombie");
+		view.showMessage("At anytime during the game type 'help' to get a list of commands");
+		view.showMessage("The SunFlower:\n" + 
+				"	HP: 5\n" + 
+				"	Defense: 1\n" + 
+				"	Attack Damage: 0\n" + 
+				"	Attack Range: 0 tiles across, 0 above or below\n" + 
+				"	Cost: 75 sun\n" + 
+				"	Cooldown to plant: 2 turns\n" + 
+				"The PeaShooter:\n" + 
+				"	HP: 10\n" + 
+				"	Defense: 1\n" + 
+				"	Attack Damage: 3.5\n" + 
+				"	Attack Range: 9 tiles across, 1 above or below\n" + 
+				"	Cost: 125 sun\n" + 
+				"	Cooldown to plant: 1 turn\n" + 
+				"The Zombie:\n" + 
+				"	Default plant stats:\n" + 
+				"	HP: 10\n" + 
+				"	Defense: 1.2\n" + 
+				"	Attack Damage: 2\n" + 
+				"	Attack Range: 1 tiles across, 0 above or below\n" + 
+				"	Value for killing: 15 sun");
+		view.getInput("Press enter to start the game!");
 		start();
 	}
 	//An infinite loop to read user input and execute the commands they type
@@ -138,20 +164,61 @@ public class Game {
 		{
 			if (!added)
 			{
-				
+				if (Turn == 3)
+				{
+					Map.addEntity(101, 0, 8);
+					added = true;
+				}
+				if (Turn == 4)
+				{
+					Map.addEntity(101, 1, 8);
+					added = true;
+				}
+				if (Turn ==  6)
+				{
+					Map.addEntity(101, 0, 8);
+					Map.addEntity(101, 4, 8);
+					added = true;
+				}
+				if (Turn == 7)
+				{
+					Map.addEntity(101, 2, 8);
+					added = true;
+				}
 			}
-			if (Map.didWin())
+			if (Turn > 7)
 			{
-				Turn = -1;
+				if (Map.didWin())
+				{
+					Turn = -1;
+					View.getInput("YOU WON!!!!! Press Enter to restart");
+				}
 			}
 		}
+		
 	}
-	
 	//This is what happens when the status command is called
 	//1. series of Ifs to parse command for validity
 	//2. output the toString of the selected entity
 	private void status(String[] command) {
-
+		if (command.length == 3)
+		{
+			if (tryParseInt(command[1]) && tryParseInt(command[2]))
+			{
+				if (Integer.parseInt(command[1]) < Map.getRows() && Integer.parseInt(command[2]) < Map.getColumns())
+				{
+					View.showEntity(Integer.parseInt(command[1]), Integer.parseInt(command[2]));
+				}
+				else
+				{
+					View.showMessage("Selected Row and Column is not within range! Please try again!");
+				}
+			}
+			else
+			{
+				View.showMessage("Syntax Error!");
+			}
+		}
 		
 	}
 	//This is what happens when the soak command is called
@@ -160,13 +227,77 @@ public class Game {
 	//3. add the sun to the user's sun
 	//4. reload the map so the user's new sun value gets updated
 	private void soak() {
-	
+		int sunGained = 0;
+		
+		for (int i = 0; i < Map.getRows(); i++)
+		{
+			for (int j = 0; j < Map.getColumns(); j++)
+			{
+				if (Map.getEntity(i, j).getType() == 2)
+				{
+					sunGained += (Map.getEntity(i, j)).special();
+				}
+			}
+		}
+		Sun+=sunGained;
+		View.showMap(Sun, Turn, SunFlowerCD, PeaShooterCD);
+		View.showMessage("Gained " + sunGained + " Sun");
+		
+		
 	}
 	//This is what happens when the plant command is called
 	//1. series of Ifs to parse the command for validity
 	//2. if the user has enough money and the plants not on cooldown, it will add it and reduce their sun
 	private boolean plant(String[] command) {
-		retVal = false;
+		boolean retVal = false;
+		if (command.length == 4)
+		{
+			if ( (command[1].equals("sunflower") || command[1].equals("peashooter")) && (tryParseInt(command[2]) && tryParseInt(command[3])))
+			{
+				if (Integer.parseInt(command[2]) < Map.getRows() && Integer.parseInt(command[3]) < Map.getColumns())
+				{
+					if (command[1].equals("sunflower") && Sun >= 75 && SunFlowerCD <= 0)
+					{
+						if (Map.addEntity(2, Integer.parseInt(command[2]), Integer.parseInt(command[3])))
+						{
+							
+							retVal = true;
+							Sun -= Map.getEntity(Integer.parseInt(command[2]), Integer.parseInt(command[3])).getValue();
+							SunFlowerCD=2;
+						}
+						else
+						{
+							View.showMessage("There is already something there!");
+						}
+					}
+					else if (command[1].equals("peashooter") && Sun >= 125 && PeaShooterCD <= 0)
+					{
+						if (Map.addEntity(1, Integer.parseInt(command[2]), Integer.parseInt(command[3])))
+						{
+							retVal = true;
+							Sun -= Map.getEntity(Integer.parseInt(command[2]), Integer.parseInt(command[3])).getValue();
+							PeaShooterCD = 1;
+						}
+						else
+						{
+							View.showMessage("There is already something there!");
+						}
+					}
+					else
+					{
+						View.showMessage("Insufficient Sun OR that plant is on cooldown");
+					}
+				}
+			}
+			else
+			{
+				View.showMessage("Syntax Error!");
+			}
+		}
+		else
+		{
+			View.showMessage("Syntax Error!");
+		}
 		return retVal;
 	}
 	//This is what happens when the attack command is called
@@ -174,6 +305,55 @@ public class Game {
 	//2. if the user is attacking a valid entity/hasn't already attacked, check if it died to remove it.
 	private boolean attack(String[] command) {
 		boolean retVal = false;
+		if (command.length == 5)
+		{
+			if (tryParseInt(command[1]) && tryParseInt(command[2]) && tryParseInt(command[3]) && tryParseInt(command[4]))
+			{
+				if (Map.getRows() > Integer.parseInt(command[1]) && Map.getColumns() > Integer.parseInt(command[2]) && Map.getRows() > Integer.parseInt(command[3]) && Map.getColumns() > Integer.parseInt(command[4]))
+				{
+					if (Map.getEntity(Integer.parseInt(command[1]), Integer.parseInt(command[2])).getType() < 100)
+					{
+						if (Map.getEntity(Integer.parseInt(command[3]), Integer.parseInt(command[4])).getType() > 100)
+						{
+							if (Map.getEntity(Integer.parseInt(command[1]), Integer.parseInt(command[2])).Attack(Map.getEntity(Integer.parseInt(command[3]), Integer.parseInt(command[4]))))
+							{
+								retVal = true;
+								if (Map.getEntity(Integer.parseInt(command[3]), Integer.parseInt(command[4])).getHealth() <= 0)
+								{
+									Sun+= Map.removeEntity(Integer.parseInt(command[3]), Integer.parseInt(command[4]), false);
+								}
+							}
+							else
+							{
+								View.showMessage("That is not within range, or has already attacked");
+							}
+							
+						}
+						else
+						{
+							View.showMessage("That is not a valid target!");
+						}
+					}
+					else
+					{
+						View.showMessage("That is not a valid plant!");
+					}
+				}
+				else
+				{
+					View.showMessage("Syntax Error! A value was out of bounds.");
+				}
+			}
+			else
+			{
+				View.showMessage("Syntax Error!");
+			}
+					
+		}
+		else
+		{
+			View.showMessage("Syntax Error!");
+		}
 		return retVal;
 		
 	}
@@ -208,9 +388,18 @@ public class Game {
 
 		for (int i = 0; i < commands.size(); i++)
 		{
-			System.out.println(commands.get(i) + ": " + descriptions.get(i));
+			View.showMessage(commands.get(i) + ": " + descriptions.get(i));
 		}
 		
+	}
+	//This method is used for parsing command validity without raising errors
+	private boolean tryParseInt(String value) {  
+	     try {  
+	         Integer.parseInt(value);  
+	         return true;  
+	      } catch (NumberFormatException e) {  
+	         return false;  
+	      }  
 	}
 	
 	

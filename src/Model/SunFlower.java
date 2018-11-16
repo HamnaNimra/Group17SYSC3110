@@ -15,6 +15,7 @@ public class SunFlower extends Entity {
 		//Attack Range: 0 tiles across, 0 above or below
 		//Cost: 75 sun
 		super(5f,1f,0f,0,0,75);
+		soaked = true;
 		setType(2);
 	}
 	@Override
@@ -31,9 +32,9 @@ public class SunFlower extends Entity {
 	}
 
 	@Override
-	public char getDisplay()
+	public String getDisplay()
 	{
-		char retVal = 'S';
+		String retVal = "S";
 		return retVal;
 	}
 	//Special turnPass to setSoaked

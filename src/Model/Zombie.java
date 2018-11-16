@@ -31,9 +31,9 @@ public class Zombie extends Entity {
 	}
 	
 	@Override
-	public char getDisplay()
+	public String getDisplay()
 	{
-		char retVal = 'Z';
+		String retVal = "Z";
 		return retVal;
 	}
 	//Zombie specific move forward or attack method

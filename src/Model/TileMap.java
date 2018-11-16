@@ -7,8 +7,6 @@ public class TileMap {
 	private Entity[][] board;
 	//the board size
 	private int Columns, Rows;
-	//a boolean the game class can check to see if the user should die
-	boolean zombieWon;
 	//constructor
 	public TileMap(int rows, int columns)
 	{
@@ -36,7 +34,6 @@ public class TileMap {
 	//this method remakes the board and populates it with empty space Entities
 	public void ResetBoard()
 	{
-		zombieWon = false;
 		board = new Entity[Rows][Columns];
 		for (int i = 0; i < Rows; i++)
 		{
@@ -45,10 +42,6 @@ public class TileMap {
 				addEntity(100,i,j);
 			}
 		}
-	}
-	//The getter for the boolean that determines if the user died
-	public boolean isZombieWon() {
-		return zombieWon;
 	}
 	//Ensure no errors get raised.
 	//If there is an entity in the spot they're trying to add
@@ -102,33 +95,11 @@ public class TileMap {
 		
 		return retVal;
 	}
-	//This method performs all the end turn methods on each entity
-	//this class also handles the logic for what the zombies will do
-	public int endTurn()
+	public void moveLeft(int x, int y)
 	{
-		int retVal = 0;
-		for (int i = 0; i < Rows; i++)
-		{
-			for (int j = 0; j < Columns; j++)
-			{
-				board[i][j].turnPass();
-				if (board[i][j].getType()>100)
-				{
-					if (j-1 == 0)
-					{
-						zombieWon = true;
-					}
-					else if (((Zombie)board[i][j]).makemove(board[i][j-1]))
-					{
-						
-						 retVal += this.removeEntity(i,j-1,false);
-						 board[i][j-1] = board[i][j];
-						 board[i][j] = new Entity();
-					}
-				}
-			}
-		}
-		return retVal;
+		 board[x][y-1] = board[x][y];
+		 board[x][y] = new Entity();
+		 board[x][y-1].setColumn(y-1);
 	}
 	//Getter for an entity on the board
 	public Entity getEntity(int row, int column)
@@ -142,6 +113,28 @@ public class TileMap {
 	//gets board height
 	public int getRows() {
 		return Rows;
+	}
+	//Scans the range of the plant checking for zombies, returns the first one found.
+	public Entity getTarget(int X, int Y) {
+		Entity retVal = null;
+		for (int i = Y; i <= Y + board[X][Y].getRangeX();i++)
+		{
+			for (int j = X-board[X][Y].getRangeY(); j <= X + board[X][Y].getRangeY(); j++)
+			{
+				if (i < Columns && j < Rows && i >= 0 && j >= 0)
+				{
+					if (board[j][i].getType() > 100)
+					{
+						retVal = board[j][i];
+						//Escape the loop
+						i += Rows;
+						j += Columns;
+					}
+				}
+			}
+			
+		}
+		return retVal;
 	}
 
 	

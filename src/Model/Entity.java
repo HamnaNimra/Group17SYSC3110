@@ -29,7 +29,7 @@ public class Entity {
 		setRangeX(RangeX);
 		setRangeY(RangeY);
 		setValue(Value);
-		
+		attacked=true;
 	}
 	//Constructor for EMPTY SPACES
 	public Entity()
@@ -122,9 +122,9 @@ public class Entity {
 		setAttacked(false);
 	}
 	//Getters---Setters
-	public char getDisplay()
+	public String getDisplay()
 	{
-		char retVal = ' ';
+		String retVal = " ";
 		return retVal;
 	}
 	public float getHealth() {

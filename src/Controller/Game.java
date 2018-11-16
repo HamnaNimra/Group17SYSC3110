@@ -1,8 +1,10 @@
 package Controller;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import Model.Entity;
 import Model.TileMap;
+import Model.Zombie;
 import View.View;
 
 //This is the game class
@@ -14,35 +16,22 @@ public class Game {
 	private TileMap Map;
 	private View View;
 	//The current level (there is only 1 right now)
-	int level = 1;
 	//A boolean to make sure zombies dont get added multiple times in one turn.
 	private boolean added = false;
-	//The users Sun, and the current turn
+	//The users Sun, current turn, and level
 	private int Sun;
 	private int Turn;
+	private int currentLevel;
 	//The cooldown for planting different plants
 	private int SunFlowerCD;
 	private int PeaShooterCD;
-	//All the possible commands
-	ArrayList<String> commands = new ArrayList<String>(
-		    Arrays.asList("help",
-		    		"restart",
-		    		"end",
-		    		"attack",
-		    		"plant",
-		    		"soak",
-		    		"status",
-		    		"show"));
-	//All the commands help text
-	ArrayList<String> descriptions = new ArrayList<String>(
-		    Arrays.asList("displays this dialog",
-		    		"resets the game to turn 0",
-		    		"finishes your turn",
-		    		"attacks a target zombie (ex. attack plantRow plantColumn zombieRow zombieColumn)",
-		    		"plants a plant (ex. plant [sunflower|peashooter] row column)",
-		    		"makes all sunflowers collect sunlight",
-		    		"shows the status of any entity (ex. status row column)",
-		    		"clears the display and shows the map"));
+	//ENUM from view
+	public enum State {
+		viewing, plantingS, plantingP
+	
+	}
+
+	
 	//Constructor and printout of overview of the game
 	public Game(TileMap map, View view)
 	{
@@ -50,118 +39,57 @@ public class Game {
 		Map = map;
 		View = view;
 		//Main Menu of sorts
-		view.showMessage("Welcome to Plants vs. Zombies by Group 17");
-		view.showMessage("Currently the game only features 2 types of plants and one type of zombie");
-		view.showMessage("At anytime during the game type 'help' to get a list of commands");
-		view.showMessage("The SunFlower:\n" + 
+		view.showMessage("Welcome to Plants vs. Zombies by Group 17Currently the game only features 2 types of plants and one type of zombie\nTo plant something, click its icon on the hotbar at the top, then again on the tile you wish to plant it on.\n\nThe SunFlower:\n" + 
 				"	HP: 5\n" + 
 				"	Defense: 1\n" + 
 				"	Attack Damage: 0\n" + 
 				"	Attack Range: 0 tiles across, 0 above or below\n" + 
 				"	Cost: 75 sun\n" + 
 				"	Cooldown to plant: 2 turns\n" + 
-				"The PeaShooter:\n" + 
+				"\nThe PeaShooter:\n" + 
 				"	HP: 10\n" + 
 				"	Defense: 1\n" + 
 				"	Attack Damage: 3.5\n" + 
 				"	Attack Range: 9 tiles across, 1 above or below\n" + 
 				"	Cost: 125 sun\n" + 
 				"	Cooldown to plant: 1 turn\n" + 
-				"The Zombie:\n" + 
+				"\nThe Zombie:\n" + 
 				"	Default plant stats:\n" + 
 				"	HP: 10\n" + 
 				"	Defense: 1.2\n" + 
 				"	Attack Damage: 2\n" + 
 				"	Attack Range: 1 tiles across, 0 above or below\n" + 
 				"	Value for killing: 15 sun");
-		view.getInput("Press enter to start the game!");
-		start();
-	}
-	//An infinite loop to read user input and execute the commands they type
-	private void start() {
-		//Clears the view and initializes sun, turn and the board
-		View.clear();
-		Sun = 200;
-		Turn = 0;
-		Map.ResetBoard();
-		//Shows the current map and the level 1 message
-		View.showMap(Sun, Turn, SunFlowerCD, PeaShooterCD);
-		View.showMessage("\n\nFive zombies will come in the next wave, you have 3 turns to prepare");
-		//Start of command loop
-		while(Turn >= 0)
+		currentLevel = 1;
+		levelLogic();
+		for (int i = 0; i < Map.getRows(); i++)
 		{
-			//boolean mostly used for determining when the board should be rendered
-			boolean commandSuccess = false;
-			while (!commandSuccess)
+			for (int j = 0; j < Map.getColumns(); j++)
 			{
-			
-				String input = View.getInput("Type 'help' to see a list of commands:");
-				//Slices the command for parsing and passes it through to a straightforward set of ifs
-				String[] command = input.split(" ");
-				if (commands.contains(command[0]))
-				{
-					if (command[0].equals("help"))
-					{
-						help();
-					}
-					else if (command[0].equals("restart"))
-					{
-						Turn = -1;
-						commandSuccess = true;
-					}
-					else if (command[0].equals("end"))
-					{
-						commandSuccess = true;
-						endTurn();
-						
-					}
-					else if (command[0].equals("attack"))
-					{
-						if (attack(command))
-						{
-							commandSuccess = true;
-						}
-					}
-					else if (command[0].equals("plant"))
-					{
-						if (plant(command))
-						{
-							commandSuccess = true;
-						}
-
-					}
-					else if (command[0].equals("soak"))
-					{
-						soak();						
-					}
-					else if (command[0].equals("status"))
-					{
-						status(command);
-					}
-					else if (command[0].equals("show"))
-					{
-						commandSuccess = true;
-					}
-				}
-				else
-				{
-					View.showMessage("Command Error, please check your input and try again");
-				}
-			
+				buttonListener listener = new buttonListener(i,j);
+				View.addButtonListener(listener, i, j);
 			}
-			levelLogic(level);
-			View.showMap(Sun, Turn, SunFlowerCD, PeaShooterCD);
-			
 		}
-		start();
-		
-		
+		view.addEndTurnListener(new endTurnListener());
+		view.addRestartListener(new restartListener());
 	}
 	//Determines what happens when, most likely will be converted to read from a text file in the future
 	//that way it will also open up the ability for the user to create, save and edit their own levels
-	private void levelLogic(int currentLevel) {
+	private void levelLogic() {
+		if (Turn == 0)
+		{
+			//Clears the view and initializes sun, turn and the board
+			Sun = 200;
+			Turn = 0;
+			Map.ResetBoard();
+			updateView();
+		}
 		if (currentLevel == 1)
 		{
+			if (Turn == 0)
+			{
+				View.showMessage("\n\nFive zombies will come in the next wave, you have 3 turns to prepare");
+			}
 			if (!added)
 			{
 				if (Turn == 3)
@@ -191,179 +119,90 @@ public class Game {
 				if (Map.didWin())
 				{
 					Turn = -1;
-					View.getInput("YOU WON!!!!! Press Enter to restart");
+					View.showMessage("You Won! Press the restart button to restart");
 				}
 			}
 		}
 		
 	}
-	//This is what happens when the status command is called
-	//1. series of Ifs to parse command for validity
-	//2. output the toString of the selected entity
-	private void status(String[] command) {
-		if (command.length == 3)
+	//The listener for every button on the board (method included)
+	public class buttonListener implements ActionListener
+	{
+		//position of the button
+		int X;
+		int Y;
+		//Constructor sets position
+		public buttonListener(int x, int y)
 		{
-			if (tryParseInt(command[1]) && tryParseInt(command[2]))
+			X = x;
+			Y = y;
+		}
+		//This executes a switch based on state of the GUI,
+		// viewing : Show Entity.toString()
+		// plantingS : plant sunflower
+		// plantingP : plant peashooter
+		//There are no checks for money because the button is disabled if there isnt enough money
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if (View.getGUIState() == View.state.viewing)
 			{
-				if (Integer.parseInt(command[1]) < Map.getRows() && Integer.parseInt(command[2]) < Map.getColumns())
-				{
-					View.showEntity(Integer.parseInt(command[1]), Integer.parseInt(command[2]));
-				}
-				else
-				{
-					View.showMessage("Selected Row and Column is not within range! Please try again!");
-				}
+				View.showMessage(Map.getEntity(X, Y).toString());
 			}
-			else
+			else if (View.getGUIState() == View.state.plantingS)
 			{
-				View.showMessage("Syntax Error!");
+				Map.addEntity(2, X, Y);
+				Sun -= Map.getEntity(X,Y).getValue();
+				SunFlowerCD=2;
+				View.setGUIState(0);
+				View.enableAllBoxes();
+				updateView();
 			}
+			else if (View.getGUIState() == View.state.plantingP)
+			{
+				Map.addEntity(1, X, Y);
+				Sun -= Map.getEntity(X,Y).getValue();
+				PeaShooterCD=1;
+				View.setGUIState(0);
+				View.enableAllBoxes();
+				updateView();
+			}
+		}
+	}
+	//The listener for the end Button (method endTurn() called)
+	public class endTurnListener implements ActionListener
+	{
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			endTurn();
 		}
 		
 	}
-	//This is what happens when the soak command is called
-	//1. check each entity to see if its a sunflower
-	//2. if it is, add up the sun gained from the soak
-	//3. add the sun to the user's sun
-	//4. reload the map so the user's new sun value gets updated
-	private void soak() {
-		int sunGained = 0;
-		
-		for (int i = 0; i < Map.getRows(); i++)
-		{
-			for (int j = 0; j < Map.getColumns(); j++)
-			{
-				if (Map.getEntity(i, j).getType() == 2)
-				{
-					sunGained += (Map.getEntity(i, j)).special();
-				}
-			}
+	//The listener for the restart button (method included)
+	public class restartListener implements ActionListener
+	{
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			Turn = 0;
+			SunFlowerCD=0;
+			PeaShooterCD=0;
+			levelLogic();
 		}
-		Sun+=sunGained;
-		View.showMap(Sun, Turn, SunFlowerCD, PeaShooterCD);
-		View.showMessage("Gained " + sunGained + " Sun");
-		
-		
-	}
-	//This is what happens when the plant command is called
-	//1. series of Ifs to parse the command for validity
-	//2. if the user has enough money and the plants not on cooldown, it will add it and reduce their sun
-	private boolean plant(String[] command) {
-		boolean retVal = false;
-		if (command.length == 4)
-		{
-			if ( (command[1].equals("sunflower") || command[1].equals("peashooter")) && (tryParseInt(command[2]) && tryParseInt(command[3])))
-			{
-				if (Integer.parseInt(command[2]) < Map.getRows() && Integer.parseInt(command[3]) < Map.getColumns())
-				{
-					if (command[1].equals("sunflower") && Sun >= 75 && SunFlowerCD <= 0)
-					{
-						if (Map.addEntity(2, Integer.parseInt(command[2]), Integer.parseInt(command[3])))
-						{
-							
-							retVal = true;
-							Sun -= Map.getEntity(Integer.parseInt(command[2]), Integer.parseInt(command[3])).getValue();
-							SunFlowerCD=2;
-						}
-						else
-						{
-							View.showMessage("There is already something there!");
-						}
-					}
-					else if (command[1].equals("peashooter") && Sun >= 125 && PeaShooterCD <= 0)
-					{
-						if (Map.addEntity(1, Integer.parseInt(command[2]), Integer.parseInt(command[3])))
-						{
-							retVal = true;
-							Sun -= Map.getEntity(Integer.parseInt(command[2]), Integer.parseInt(command[3])).getValue();
-							PeaShooterCD = 1;
-						}
-						else
-						{
-							View.showMessage("There is already something there!");
-						}
-					}
-					else
-					{
-						View.showMessage("Insufficient Sun OR that plant is on cooldown");
-					}
-				}
-			}
-			else
-			{
-				View.showMessage("Syntax Error!");
-			}
-		}
-		else
-		{
-			View.showMessage("Syntax Error!");
-		}
-		return retVal;
-	}
-	//This is what happens when the attack command is called
-	//1. series of Ifs to parse the command for validity
-	//2. if the user is attacking a valid entity/hasn't already attacked, check if it died to remove it.
-	private boolean attack(String[] command) {
-		boolean retVal = false;
-		if (command.length == 5)
-		{
-			if (tryParseInt(command[1]) && tryParseInt(command[2]) && tryParseInt(command[3]) && tryParseInt(command[4]))
-			{
-				if (Map.getRows() > Integer.parseInt(command[1]) && Map.getColumns() > Integer.parseInt(command[2]) && Map.getRows() > Integer.parseInt(command[3]) && Map.getColumns() > Integer.parseInt(command[4]))
-				{
-					if (Map.getEntity(Integer.parseInt(command[1]), Integer.parseInt(command[2])).getType() < 100)
-					{
-						if (Map.getEntity(Integer.parseInt(command[3]), Integer.parseInt(command[4])).getType() > 100)
-						{
-							if (Map.getEntity(Integer.parseInt(command[1]), Integer.parseInt(command[2])).Attack(Map.getEntity(Integer.parseInt(command[3]), Integer.parseInt(command[4]))))
-							{
-								retVal = true;
-								if (Map.getEntity(Integer.parseInt(command[3]), Integer.parseInt(command[4])).getHealth() <= 0)
-								{
-									Sun+= Map.removeEntity(Integer.parseInt(command[3]), Integer.parseInt(command[4]), false);
-								}
-							}
-							else
-							{
-								View.showMessage("That is not within range, or has already attacked");
-							}
-							
-						}
-						else
-						{
-							View.showMessage("That is not a valid target!");
-						}
-					}
-					else
-					{
-						View.showMessage("That is not a valid plant!");
-					}
-				}
-				else
-				{
-					View.showMessage("Syntax Error! A value was out of bounds.");
-				}
-			}
-			else
-			{
-				View.showMessage("Syntax Error!");
-			}
-					
-		}
-		else
-		{
-			View.showMessage("Syntax Error!");
-		}
-		return retVal;
 		
 	}
 	//This is what happens when the End command is called
-	//1.Increase Turn
-	//2.Decrement cooldowns
-	//3.reset added
-	//4.runs the models end turn method, and adds up any sun gained from it
-	//5.checks to see if the zombies won, if they did reloads the map and tells the user
+		//1.Increase Turn
+		//2.Decrement cooldowns
+		//3.reset added
+		//EDITED: the EndTurn method from the TileMap was absorbed into here for doing animations
+		//4.passesTurn on each (resets attacked and soaked)
+		//5.Executes the special move of each plant(only sunflowers have one) and does animation
+		//6.looks for a target to attack on each plant, and then does + animation
+		//7.makemove on each zombie
+		//8.checks to see if the zombies won, if they did reloads the map and tells the user
 	private void endTurn() {
+		boolean zombieWon = false;
 		Turn++;
 		if (SunFlowerCD > 0)
 		{
@@ -374,34 +213,76 @@ public class Game {
 			PeaShooterCD--;
 		}
 		added = false;
-		Sun += Map.endTurn();
-		if (Map.isZombieWon())
-		{
-			View.showMap(Sun, Turn, SunFlowerCD, PeaShooterCD);
-			Turn = -1;
-			View.getInput("YOU DIED!!!!! Press Enter to restart");
-		}
-		
-	}
-	//Outputs the command list
-	private void help() {
 
-		for (int i = 0; i < commands.size(); i++)
+		for (int i = 0; i < Map.getRows(); i++)
 		{
-			View.showMessage(commands.get(i) + ": " + descriptions.get(i));
+			for (int j = 0; j < Map.getColumns(); j++)
+			{
+				Map.getEntity(i, j).turnPass();
+				if (Map.getEntity(i, j).getType() < 100)
+				{
+					Sun += Map.getEntity(i, j).special();
+					if (Map.getEntity(i, j).getType() == 2)
+					{
+						View.doAnimation(Map.getEntity(i, j), new String[] {"S", "S0","S1","S2"});
+					}
+					Entity target = Map.getTarget(i, j);
+					if (target != null)
+					{
+						if (Map.getEntity(i, j).getType() == 1)
+						{
+							View.doAnimation(Map.getEntity(i, j), new String[] {"P", "P0", "P", "P1"});
+						}
+						Map.getEntity(i, j).Attack(target);
+						if (target.getHealth() <= 0)
+						{
+							if (target.getType() == 101)
+							{
+								View.doAnimation(target, new String[] {" ", "Z0", "Z1"});
+							}
+							Sun += Map.removeEntity(target.getRow(), target.getColumn(), false);
+						}
+						else
+						{
+							if (target.getType() == 101)
+							{
+								View.doAnimation(target, new String[] {"Z", "Z0", "Z1"});
+							}
+						}
+					}
+				}
+				
+				if (Map.getEntity(i, j).getType()>100)
+				{
+					if (j == 0)
+					{
+						zombieWon = true;
+					}
+					else if (((Zombie)Map.getEntity(i, j)).makemove(Map.getEntity(i, j-1)))
+					{
+						 Sun += Map.removeEntity(i,j-1,false);
+						 Map.moveLeft(i,j);
+					}
+				}
+			}
 		}
 		
+		
+		
+		if (zombieWon)
+		{
+			updateView();
+			Turn = 0;
+			View.showMessage("YOU DIED!!!!! Press OK to restart.");
+		}
+		levelLogic();
+		updateView();
 	}
-	//This method is used for parsing command validity without raising errors
-	private boolean tryParseInt(String value) {  
-	     try {  
-	         Integer.parseInt(value);  
-	         return true;  
-	      } catch (NumberFormatException e) {  
-	         return false;  
-	      }  
+	//Sends View.updateView with the game's fields
+	public void updateView() {
+		View.updateView(Sun, Turn, SunFlowerCD, PeaShooterCD);	
 	}
-	
+
 	
 
 }

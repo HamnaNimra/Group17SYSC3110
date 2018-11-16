@@ -30,9 +30,9 @@ public class PeaShooter extends Entity {
 	
 
 	@Override
-	public char getDisplay()
+	public String getDisplay()
 	{
-		char retVal = 'P';
+		String retVal = "P";
 		return retVal;
 	}
 

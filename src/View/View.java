@@ -29,8 +29,6 @@ public class View extends JFrame{
 		viewing, plantingS, plantingP
 	
 	}
-	//A scanner for input and output.
-	Scanner scanner = new Scanner(System.in);
 
 	//Constructor
 	public View(TileMap newMap)
@@ -272,7 +270,7 @@ public class View extends JFrame{
 				}
 				if (target.getHealth() <= 0)
 				{
-					buttonMap[target.getRow()][target.getColumn()].setIcon(getSprite(" "));
+					buttonMap[target.getRow()][target.getColumn()].setIcon(getSprite(currentMap.getEntity(target.getRow(), target.getColumn()).getDisplay()));
 				}
 			}
 		};

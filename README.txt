@@ -11,7 +11,8 @@ Version 2.1.1
 Edited how the game works
 Version 3.1.1
 Added 5 levels, added undo/redo, added CherryBomb, WallNut, Chomper, Fast Zombie, Pole zombie, and giant Zombie entities.
-
+Version 3.1.2
+We forgot to add the descriptions of the plants and zombies
 README Author and all supporting diagrams author: Manel Oudjida
 
 This is the overview of game mechanics. Feel free to add more just make sure you update the version like i did at the top.
@@ -36,6 +37,26 @@ The PeaShooter:
 	Attack Range: 9 tiles across, 1 above or below
 	Cost: 125 sun
 	Cooldown to plant: 1 turn
+The CherryBomb:
+	HP: 3
+	Defense: 1
+	Attack Damage: 100
+	Attack Range: 0 tiles across, 0 above or below
+	Cost: 150 sun
+	Special: Explodes for massive damage in a 4 * 3 rectangle centered around it
+The WallNut:
+	HP: 15
+	Defense: 2
+	Attack Damage: 0
+	Attack Range: 0 tiles across, 0 above or below
+	Cost: 50 sun
+The Chomper:
+	HP: 10
+	Defense: 1
+	Attack Damage: 5
+	Attack Range: 1 tiles across, 0 above or below
+	Cost: 150 sun
+	Special: Can eat a zombie and chew on it till it dies
 The Zombie:
 	Default plant stats:
 	HP: 10
@@ -43,6 +64,25 @@ The Zombie:
 	Attack Damage: 2
 	Attack Range: 1 tiles across, 0 above or below
 	Value for killing: 15 sun
+The Fast Zombie:
+	HP: 10
+	Defense: 1.2
+	Attack Damage: 3
+	Attack Range: 1 tiles across, 0 above or below
+	Value: 30 sun
+The Pole Zombie:
+	HP: 10
+	Defense: 1.2
+	Attack Damage: 5 (when not disarmed)
+	Attack Range: 1 tiles across, 0 above or below
+	Value: 30 sun
+The Giant Zombie:
+	HP: 100
+	Defense: 1
+	Attack Damage: 10
+	Attack Range: 1 tiles across, 0 above or below
+	Value: 100 sun
+
 	
 The way the game works is simple, you are given a few turns to prepare for the firt wave of zombies. During each turn you can use the hotbar at the top
 to plant either a sunflower or peashooter, end your turn, or restart entirely. To plant, you first click the picture of the plant in the hotbar, this will

@@ -5,8 +5,6 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.*;
@@ -26,7 +24,7 @@ public class View extends JFrame{
 	private JLabel infoLabel;
 	public State state;
 	public enum State {
-		viewing, plantingS, plantingP
+		viewing, plantingS, plantingP, plantingC, plantingW, plantingR
 	
 	}
 
@@ -62,6 +60,26 @@ public class View extends JFrame{
 			{
 				plantsMenu[i] = new JButton(getSprite("P"));
 
+			}
+			else if (i == 2)
+			{
+				plantsMenu[i] = new JButton(getSprite("C"));
+			}
+			else if (i == 3)
+			{
+				plantsMenu[i] = new JButton(getSprite("W"));
+			}
+			else if (i == 4)
+			{
+				plantsMenu[i] = new JButton(getSprite("R"));
+			}
+			else if (i == currentMap.getColumns()-4)
+			{
+				plantsMenu[i] = new JButton("Undo");
+			}
+			else if (i == currentMap.getColumns()-3)
+			{
+				plantsMenu[i] = new JButton("Redo");
 			}
 			else if (i == currentMap.getColumns()-2)
 			{
@@ -109,10 +127,55 @@ public class View extends JFrame{
 				}
 			}
 		});
+		//created its own action Listener because it only affects internal state
+		plantsMenu[2].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (getGUIState() == State.plantingC)
+				{
+					setGUIState(0);
+					enableAllBoxes();
+				}
+				else
+				{
+					setGUIState(3);
+					disableOccupiedBoxes();
+				}
+			}
+		});
+		//created its own action Listener because it only affects internal state
+		plantsMenu[3].addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (getGUIState() == State.plantingW)
+				{
+					setGUIState(0);
+					enableAllBoxes();
+				}
+				else
+				{
+					setGUIState(4);
+					disableOccupiedBoxes();
+				}
+			}
+		});
+		//created its own action Listener because it only affects internal state
+				plantsMenu[4].addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						if (getGUIState() == State.plantingR)
+						{
+							setGUIState(0);
+							enableAllBoxes();
+						}
+						else
+						{
+							setGUIState(5);
+							disableOccupiedBoxes();
+						}
+					}
+				});
 		//grid layout because it looks like the board.
 		bottomPanel.setLayout(new GridLayout(currentMap.getRows()+1,currentMap.getColumns()+1));
 		//Used a bit of html so i could use <br>'s, it is it's own field so it can be updated easily
-		infoLabel = new JLabel("<html>Turn: 0<br>Sun: 0<br>Sunflower CD: 0<br> Peashooter CD: 0</html>");
+		infoLabel = new JLabel("<html>Turn: 0  Sun: 0<br>Sunflower CD: 0<br>Peashooter CD: 0<br>CherryBomb CD: 0<br>WallNut CD: 0<br>Chomper CD: 0</html>");
 		//This centers the text inside the label
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		infoLabel.setVerticalAlignment(SwingConstants.CENTER);
@@ -190,11 +253,19 @@ public class View extends JFrame{
 	{
 		plantsMenu[currentMap.getColumns()-2].addActionListener(listener);
 	}
+	public void addUndoListener(ActionListener listener)
+	{
+		plantsMenu[currentMap.getColumns() - 4].addActionListener(listener);
+	}
+	public void addRedoListener(ActionListener listener)
+	{
+		plantsMenu[currentMap.getColumns()-3].addActionListener(listener);
+	}
 	
 	//Prints the Map to the Console, Figure out a nice way to display each entity
 	//Assume all entities have the method getDisplay() that in this milestone will
 	//Return a char, representing what they look like.
-	public void updateView(int sun, int turn, int sunflowerCD, int peashooterCD)
+	public void updateView(int sun, int turn, int sunflowerCD, int peashooterCD, int cherrybombCD, int wallnutCD, int chomperCD)
 	{
 		if (sunflowerCD > 0 || sun < 75)
 		{
@@ -214,8 +285,40 @@ public class View extends JFrame{
 			plantsMenu[1].setEnabled(true);
 		}
 		
+		if (cherrybombCD > 0 || sun < 150)
+		{
+			plantsMenu[2].setEnabled(false);
+		}
+		else
+		{
+			plantsMenu[2].setEnabled(true);
+		}
 		
-		infoLabel.setText("<html>Turn: "+turn+"<br>Sun: "+sun+"<br>Sunflower CD: "+sunflowerCD+"<br> Peashooter CD: "+peashooterCD+"</html>");
+		if (wallnutCD > 0 || sun < 50)
+		{
+			plantsMenu[3].setEnabled(false);
+		}
+		else
+		{
+			plantsMenu[3].setEnabled(true);
+		}
+		
+		if (chomperCD > 0 || sun < 150)
+		{
+			plantsMenu[4].setEnabled(false);
+		}
+		else
+		{
+			plantsMenu[4].setEnabled(true);
+		}
+		
+		
+		infoLabel.setText("<html>Turn: "+turn+"Sun: "+sun+"<br>Sunflower CD: "+sunflowerCD+"<br> Peashooter CD: "+peashooterCD+"<br>CherryBomb CD: "+cherrybombCD+"<br>WallNut CD: "+wallnutCD+"<br>Chomper CD: "+chomperCD+"</html>");
+		updateView2();
+	}
+	//Split updateView into this second method so we can just update the board after an animation instead of
+	//making weird work arounds due to thread inconsistencies.
+	private void updateView2() {
 		for (int i = 0; i < currentMap.getRows(); i++)
 		{
 			for (int j = 0; j < currentMap.getColumns(); j++)
@@ -254,24 +357,13 @@ public class View extends JFrame{
 					}
 					buttonMap[target.getRow()][target.getColumn()].setIcon(getSprite(identifiers[i]));
 				}
-				//Waits after before switching back to original
+				//Waits after before updating the view
 				try {
 					TimeUnit.MILLISECONDS.sleep(250);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
 				}
-				buttonMap[target.getRow()][target.getColumn()].setIcon(original);
-				//Animation bugs made us add this last part to ensure the map doesnt have a lingering dead zombie
-				//without updating the entire board again
-				try {
-					TimeUnit.MILLISECONDS.sleep(700);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
-				if (target.getHealth() <= 0)
-				{
-					buttonMap[target.getRow()][target.getColumn()].setIcon(getSprite(currentMap.getEntity(target.getRow(), target.getColumn()).getDisplay()));
-				}
+				updateView2();
 			}
 		};
 		r.start();
@@ -288,6 +380,14 @@ public class View extends JFrame{
 	//used for setting state from game class
 	public void setGUIState(int state) {
 		this.state = State.values()[state];
+	}
+	//used for enabling/disabling the undo/redo buttons
+	public void setRedo(boolean val) {
+		plantsMenu[6].setEnabled(val);
+	}
+	public void setUndo(boolean val)
+	{
+		plantsMenu[5].setEnabled(val);
 	}
 
 }

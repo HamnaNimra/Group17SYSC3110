@@ -31,6 +31,23 @@ public class TileMap {
 		}
 		return retVal;
 	}
+	//Clones the board for use in saving state
+	public Entity[][] cloneBoard()
+	{
+		Entity[][] retVal = new Entity[Rows][Columns];
+		for (int i = 0; i < Rows; i++)
+		{
+			for (int j = 0; j < Columns; j++)
+			{
+				retVal[i][j] = board[i][j].clone();
+			}
+		}
+		return retVal;
+	}
+	public void setBoard(Entity[][] boardIn)
+	{
+		board = boardIn;
+	}
 	//this method remakes the board and populates it with empty space Entities
 	public void ResetBoard()
 	{
@@ -62,11 +79,29 @@ public class TileMap {
 			case 2:
 				board[row][column] = new SunFlower();
 				break;
+			case 3:
+				board[row][column] = new CherryBomb();
+				break;
+			case 4:
+				board[row][column] = new WallNut();
+				break;
+			case 5:
+				board[row][column] = new Chomper();
+				break;
 			case 100:
 				board[row][column] = new Entity();
 				break;
 			case 101:
 				board[row][column] = new Zombie();
+				break;
+			case 102:
+				board[row][column] = new FastZombie();
+				break;
+			case 103:
+				board[row][column] = new PoleZombie();
+				break;
+			case 104:
+				board[row][column] = new GiantZombie();
 				break;
 			}
 		}
@@ -84,22 +119,29 @@ public class TileMap {
 		
 		if (getEntity(row,column).getType() > 100)
 		{
+			
 			retVal = getEntity(row,column).getValue();
-		}
+		}	
 		else
 		{
 			retVal = (int)(getEntity(row,column).getValue() * 0.15);
 		}
-		
-		board[row][column] = new Entity();
+		if (board[row][column].getType() == 5 && ((Chomper)board[row][column]).eating)
+		{
+			board[row][column] = ((Chomper)board[row][column]).targetEaten;
+		}
+		else
+		{
+			board[row][column] = new Entity();
+		}
 		
 		return retVal;
 	}
-	public void moveLeft(int x, int y)
+	public void moveLeft(int x, int y, int distance)
 	{
-		 board[x][y-1] = board[x][y];
+		 board[x][y-distance] = board[x][y];
 		 board[x][y] = new Entity();
-		 board[x][y-1].setColumn(y-1);
+		 board[x][y-distance].setColumn(y-distance);
 	}
 	//Getter for an entity on the board
 	public Entity getEntity(int row, int column)

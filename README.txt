@@ -9,6 +9,8 @@ Version
 *I added the maujority of the documentation for the game and renamed to README* 
 Version 2.1.1
 Edited how the game works
+Version 3.1.1
+Added 5 levels, added undo/redo, added CherryBomb, WallNut, Chomper, Fast Zombie, Pole zombie, and giant Zombie entities.
 
 README Author and all supporting diagrams author: Manel Oudjida
 
@@ -99,7 +101,7 @@ Game Class:(Kyle Smith)
 	user to press enter to start. This calls the Start() method. The start method is esentially an infinite 
 	loop that gets user input from the view, and parses the commands before executing the command.
 	Road Map: The game class currently contains some of the more important variables like Sun, Turn and cooldowns,
-	these may get migrated over to the Model class for logical reasons.
+	these may get migrated over to the Model class to more closely embody an MVC setup.
 	
 	
 
@@ -136,6 +138,15 @@ Design decision explanations:
 	apply level logic. We also decided that all the logic for the levels will be handled here, as it doesn't make sense for that
 	stuff to be stored in the tileMap.
 
-
+Design Changes in Milestone 3 explanations:
+	Overall design has not changed much from the last milestone however, we chose to seperate the endTurn function into smaller methods
+	for general clarity and readability. The Undo and Redo functions save state immediately before an action is executed. This is so the undo
+	doesn't load up the state youre currently in when undo is pressed. levelLogic in the game class was hand written so as to keep balance in check
+	while a new level generation technique is being developed. We chose to leave it manual for now mainly because it is going to be completely reworked
+	in the next milestone anyways. The View class was slightly modified to allow the updating of just the buttons (and not the info label) to be done 
+	privately for the use of the animation method. The animation runs on a seperate, delayed thread, and as such would often not display the correct 
+	sprite after an animation happened. This work around to update all the buttons seems to work as intended for fixing the sprite desync. Lastly,
+	the TileMap and Entity classes all got some nifty methods for clonely, namely, Entity.clone() and TileMap.cloneBoard(). These were made in order to
+	ensure that saved states weren't saved references to the objects.
 
 

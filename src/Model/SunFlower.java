@@ -20,17 +20,19 @@ public class SunFlower extends Entity {
 	}
 	@Override
 	public String toString() {
-		return "SunFlower Plant [health=" + getHealth() + ", defense=" + getDefense() + ", attackDamage=" + getAttackDamage() + ", soaked="
-				+ hasSoaked() + ", rangeX=" + getRangeX() + ", rangeY=" + getRangeY() + ", type=" + getType() + ", row=" + getRow() + ", column=" + getColumn() + "]";
-
+		return "SunFlower Plant \nhealth=" + getHealth() + "\ndefense=" + getDefense() + "\nattackDamage=" + getAttackDamage() + "\nsoaked="
+				+ hasSoaked() + "\nrangeX=" + getRangeX() + "\nrangeY=" + getRangeY() + "\ntype=" + getType() + "\nrow=" + getRow() + "\ncolumn=" + getColumn();
 	}
 	@Override
-	public String toStringShort() {
-		return "SunFlower Plant [health=" + getHealth() + ", soaked="
-				+ hasSoaked() + ", row=" + getRow() + ", column=" + getColumn() + "]";
-
+	public Entity clone()
+	{
+		SunFlower retVal = new SunFlower();
+		retVal.setHealth(this.getHealth());
+		retVal.soaked = this.hasSoaked();
+		retVal.setColumn(this.getColumn());
+		retVal.setRow(this.getRow());
+		return retVal;
 	}
-
 	@Override
 	public String getDisplay()
 	{

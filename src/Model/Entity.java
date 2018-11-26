@@ -36,15 +36,20 @@ public class Entity {
 	{
 		setType(100);
 	}
+	//This method is used in order to clone entities since Java passes in references rather than a copy
+	//This way my entities get saved properly from state to state
+	public Entity clone()
+	{
+		Entity retVal = new Entity(this.getHealth(),this.getDefense(),this.getAttackDamage(),this.getRangeX(),this.getRangeY(),this.getValue());
+		retVal.setType(this.getType());
+		retVal.setColumn(this.getColumn());
+		retVal.setRow(this.getRow());
+		return retVal;
+	}
 	//To string method, in case the user calls status on an empty space
 	@Override
 	public String toString() {
 		return "Blank Space";
-	}
-	//short to string method for the overview of whats on the board
-	public String toStringShort()
-	{
-		return "";
 	}
 	//special move that will be overidden by children with special moves
 	public int special()
@@ -55,7 +60,7 @@ public class Entity {
 	public boolean Attack(Entity target)
 	{
 		boolean retValue = false;
-		if (isInRange(target) && !attacked)
+		if (!attacked)
 		{
 			retValue = true;
 			float targetHP = target.getHealth();
@@ -64,56 +69,6 @@ public class Entity {
 			setAttacked(true);
 		}
 		return retValue;
-	}
-	//Checks if the target is within range of this entity
-	public boolean isInRange(Entity target)
-	{
-		boolean retVal = false;
-		
-		if (checkX(target.getColumn()) && checkY(target.getRow()))
-		{
-			retVal = true;
-		}
-		
-		return retVal;
-	}
-	//checks the range up and down the rows
-	private boolean checkY(int targetRow) {
-		boolean retVal = false;
-		if (targetRow >= this.getRow())
-		{
-			if ((targetRow - this.getRow()) <= this.getRangeY())
-			{
-				retVal = true;
-			}
-		}
-		else
-		{
-			if ((this.getRow() - targetRow) <= this.getRangeY())
-			{
-				retVal = true;
-			}
-		}
-		return retVal;
-	}
-	//checks the range across the columns
-	private boolean checkX(int targetColumn) {
-		boolean retVal = false;
-		if (targetColumn >= this.getColumn())
-		{
-			if((targetColumn - this.getColumn()) <= this.getRangeX())
-			{
-				retVal = true;
-			}
-		}
-		else
-		{
-			if((this.getColumn() - targetColumn) <= this.getRangeX())
-			{
-				retVal = true;
-			}
-		}
-		return retVal;
 	}
 	//what happens when the turnPasses, children will override this and call super.turnpass
 	//then they can also do anything they need to do  I.E sunflower soak reset

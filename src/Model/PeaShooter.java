@@ -17,18 +17,19 @@ public class PeaShooter extends Entity {
 	}
 	@Override
 	public String toString() {
-		return "Pea Shooter Plant [health=" + getHealth() + ", defense=" + getDefense() + ", attackDamage=" + getAttackDamage() + ", attacked="
-				+ hasAttacked() + ", rangeX=" + getRangeX() + ", rangeY=" + getRangeY() + ", type=" + getType()
-				+ ", row=" + getRow() + ", column=" + getColumn() + "]";
+		return "Pea Shooter Plant \nhealth=" + getHealth() + "\ndefense=" + getDefense() + "\nattackDamage=" + getAttackDamage() + "\nattacked="
+				+ hasAttacked() + "\nrangeX=" + getRangeX() + "\nrangeY=" + getRangeY() + "\ntype=" + getType()
+				+ "\nrow=" + getRow() + "\ncolumn=" + getColumn();
 	}
 	@Override
-	public String toStringShort() {
-		return "Pea Shooter Plant [health=" + getHealth() + ", attacked="
-				+ hasAttacked() 
-				+ ", row=" + getRow() + ", column=" + getColumn() + "]";
+	public Entity clone()
+	{
+		PeaShooter retVal = new PeaShooter();
+		retVal.setHealth(this.getHealth());
+		retVal.setColumn(this.getColumn());
+		retVal.setRow(this.getRow());
+		return retVal;
 	}
-	
-
 	@Override
 	public String getDisplay()
 	{

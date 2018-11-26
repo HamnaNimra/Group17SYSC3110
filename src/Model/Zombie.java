@@ -6,30 +6,30 @@ public class Zombie extends Entity {
 	//constructor
 	public Zombie()
 	{
-		//Default plant stats:
+		//Zombie stats:
 		//HP: 10
 		//Defense: 1.2
-		//Attack Damage: 2
+		//Attack Damage: 3
 		//Attack Range: 1 tiles across, 0 above or below
 		//Value: 15 sun
-		super(10f,1.2f,2f,1,0,15);
+		super(10f,1.2f,3f,1,0,15);
 		setType(101);
 	}
 	@Override
 	public String toString() {
-		return "Zombie [health=" + getHealth() + ", defense=" + getDefense() + ", attackDamage=" + getAttackDamage() 		
-		+ ", row=" + getRow() + ", column=" + getColumn() + "]";
+		return "Zombie \nhealth=" + getHealth() + "\ndefense=" + getDefense() + "\nattackDamage=" + getAttackDamage() 		
+		+ "\nrow=" + getRow() + "\ncolumn=" + getColumn();
 
 	}
-	
 	@Override
-	public String toStringShort() {
-		return "Zombie [health=" + getHealth() + ", attacked="
-				+ hasAttacked()	
-				+ ", row=" + getRow() + ", column=" + getColumn() + "]";
-
+	public Entity clone()
+	{
+		Zombie retVal = new Zombie();
+		retVal.setHealth(this.getHealth());
+		retVal.setColumn(this.getColumn());
+		retVal.setRow(this.getRow());
+		return retVal;
 	}
-	
 	@Override
 	public String getDisplay()
 	{

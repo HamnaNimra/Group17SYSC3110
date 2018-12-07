@@ -1,6 +1,12 @@
 package Model;
 
-public class Chomper extends Entity {
+import java.io.Serializable;
+
+public class Chomper extends Entity implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	Entity targetEaten;
 	boolean eating;
 	//Constructor
@@ -17,6 +23,9 @@ public class Chomper extends Entity {
 		eating = false;
 		setType(5);
 	}
+	public Entity getTargetEaten() {
+		return targetEaten;
+	}
 	@Override
 	public String toString() {
 		String add = "";
@@ -32,7 +41,10 @@ public class Chomper extends Entity {
 	public Entity clone()
 	{
 		Chomper retVal = new Chomper();
-		retVal.targetEaten = targetEaten.clone();
+		if (targetEaten != null)
+		{
+			retVal.targetEaten = targetEaten.clone();
+		}
 		retVal.eating = getEating();
 		retVal.setHealth(this.getHealth());
 		retVal.setColumn(this.getColumn());

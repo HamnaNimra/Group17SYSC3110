@@ -1,9 +1,14 @@
 package Model;
 
+
 //The Cherry Bomb Class
 public class CherryBomb extends Entity {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//Constructor
-	int countDown;
+	private int countDown;
 	public CherryBomb()
 	{
 		//CherryBomb stats:

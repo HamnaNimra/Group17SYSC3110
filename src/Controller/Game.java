@@ -1,6 +1,14 @@
 package Controller;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Stack;
 
 import Model.CherryBomb;
@@ -8,10 +16,12 @@ import Model.Chomper;
 import Model.Entity;
 import Model.FastZombie;
 import Model.GiantZombie;
+import Model.Level;
 import Model.PoleZombie;
 import Model.TileMap;
 import Model.Zombie;
 import View.View;
+import View.View.State;
 
 //This is the game class
 //It handles all functions of how the game flows, and handles all commands
@@ -23,11 +33,11 @@ public class Game {
 	private View View;
 	//The current level (there is only 1 right now)
 	//A boolean to make sure zombies dont get added multiple times in one turn.
-	private boolean added = false;
 	//The users Sun, current turn, and level
 	private int Sun;
 	private int Turn;
 	private int currentLevel;
+	private Level level;
 	//The cooldown for planting different plants
 	private int SunFlowerCD;
 	private int PeaShooterCD;
@@ -81,6 +91,8 @@ public class Game {
 		view.addRestartListener(new restartListener());
 		view.addRedoListener(new redoListener());
 		view.addUndoListener(new undoListener());
+		view.addSaveListener(new saveListener());
+		view.addLoadListener(new loadListener());
 		//init undo/redo fields and controls
 		actionStack = new Stack<Object[]>();
 		redoStack = new Stack<Object[]>();
@@ -109,11 +121,11 @@ public class Game {
 		//There are no checks for money because the button is disabled if there isnt enough money
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			if (View.getGUIState() == View.state.viewing)
+			if (View.getGUIState() == State.viewing)
 			{
 				View.showMessage(Map.getEntity(X, Y).toString());
 			}
-			else if (View.getGUIState() == View.state.plantingS)
+			else if (View.getGUIState() == State.plantingS)
 			{
 				saveState();
 				Map.addEntity(2, X, Y);
@@ -123,7 +135,7 @@ public class Game {
 				View.enableAllBoxes();
 				updateView();
 			}
-			else if (View.getGUIState() == View.state.plantingP)
+			else if (View.getGUIState() == State.plantingP)
 			{
 				saveState();
 				Map.addEntity(1, X, Y);
@@ -133,7 +145,7 @@ public class Game {
 				View.enableAllBoxes();
 				updateView();
 			}
-			else if (View.getGUIState() == View.state.plantingC)
+			else if (View.getGUIState() == State.plantingC)
 			{
 				saveState();
 				Map.addEntity(3, X, Y);
@@ -143,7 +155,7 @@ public class Game {
 				View.enableAllBoxes();
 				updateView();
 			}
-			else if (View.getGUIState() == View.state.plantingW)
+			else if (View.getGUIState() == State.plantingW)
 			{
 				saveState();
 				Map.addEntity(4, X, Y);
@@ -153,7 +165,7 @@ public class Game {
 				View.enableAllBoxes();
 				updateView();
 			}
-			else if (View.getGUIState() == View.state.plantingR)
+			else if (View.getGUIState() == State.plantingR)
 			{
 				saveState();
 				Map.addEntity(5, X, Y);
@@ -188,6 +200,7 @@ public class Game {
 			CherryBombCD = (int) temp[6];
 			WallNutCD = (int) temp[7];
 			ChomperCD = (int) temp[8];
+			level = new Level(((int[])temp[9])[0], ((int[])temp[9])[1], ((int[])temp[9])[2], ((int[])temp[9])[3], ((int[])temp[9])[4], ((int[])temp[9])[5]);
 			if (actionStack.empty())
 			{
 				actionStack.push(getState());
@@ -218,6 +231,7 @@ public class Game {
 			CherryBombCD = (int) temp[6];
 			WallNutCD = (int) temp[7];
 			ChomperCD = (int) temp[8];
+			level = new Level(((int[])temp[9])[0], ((int[])temp[9])[1], ((int[])temp[9])[2], ((int[])temp[9])[3], ((int[])temp[9])[4], ((int[])temp[9])[5]);
 			if (redoStack.empty())
 			{
 				View.setRedo(false);
@@ -251,7 +265,7 @@ public class Game {
 	}
 	//get state clones all the objects necessary for ensuring the game functions when I load state
 	private Object[] getState() {
-		Object[] temp = new Object[] {Map.cloneBoard(), new Integer(Sun), new Integer(Turn), new Integer(currentLevel), new Integer(SunFlowerCD), new Integer(PeaShooterCD),new Integer(CherryBombCD),new Integer(WallNutCD),new Integer(ChomperCD)};
+		Object[] temp = new Object[] {Map.cloneBoard(), new Integer(Sun), new Integer(Turn), new Integer(currentLevel), new Integer(SunFlowerCD), new Integer(PeaShooterCD),new Integer(CherryBombCD),new Integer(WallNutCD),new Integer(ChomperCD), level.getOptions()};
 		return temp;
 	}
 	//The listener for the restart button (method included)
@@ -270,6 +284,92 @@ public class Game {
 		}
 		
 	}
+	public class saveListener implements ActionListener
+	{
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			Object[] temp = getState();
+			actionStack.push(temp);
+			try {
+				save();
+			} catch (IOException e) {
+				//Will happen mostly if they cancel
+			}			
+		}
+		
+	}
+	public class loadListener implements ActionListener
+	{
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			try {
+				load();
+			} catch (Exception e) {
+				//Will happen mostly if they cancel
+			}
+			Object[] temp = actionStack.pop();
+			Map.setBoard((Entity[][]) temp[0]);
+			Sun = (int) temp[1];
+			Turn = (int) temp[2];
+			currentLevel = (int) temp[3];
+			SunFlowerCD = (int) temp[4];
+			PeaShooterCD = (int) temp[5];
+			CherryBombCD = (int) temp[6];
+			WallNutCD = (int) temp[7];
+			ChomperCD = (int) temp[8];
+			level = new Level(((int[])temp[9])[0], ((int[])temp[9])[1], ((int[])temp[9])[2], ((int[])temp[9])[3], ((int[])temp[9])[4], ((int[])temp[9])[5]);
+			if (actionStack.empty())
+			{
+				actionStack.push(getState());
+			}
+			if (redoStack.empty())
+			{
+				View.setRedo(false);
+			}
+			else
+			{
+				View.setRedo(true);	
+			}
+			updateView();
+		}
+		
+	}
+	public void save() throws IOException
+	{
+		ArrayList<Stack<Object[]>> stacks = new ArrayList<Stack<Object[]>>();
+		stacks.add(actionStack);
+		stacks.add(redoStack);
+		FileOutputStream file = new FileOutputStream("saves/"+ View.getSaveFile() + ".txt"); 
+        ObjectOutputStream out = new ObjectOutputStream(file); 
+          
+        // Method for serialization of object 
+          
+		if (out != null)
+		{
+			out.writeObject(stacks);
+		}
+		
+		out.close(); 
+        file.close(); 
+	}
+	private void load() throws IOException, ClassNotFoundException {
+		FileInputStream file = (FileInputStream) View.chooseFile();
+        ObjectInputStream in = new ObjectInputStream(file); 
+          
+        // Method for deserialization of object 
+		if (in != null)
+		{
+			ArrayList<Stack<Object[]>> stacks=(ArrayList<Stack<Object[]>>)in.readObject();
+			actionStack = stacks.get(0);
+			redoStack = stacks.get(1);		
+		}
+		
+		in.close(); 
+        file.close(); 
+		
+	}
 	//This is what happens when the End command is called
 		//1.Increase Turn
 		//2.Decrement cooldowns
@@ -284,7 +384,6 @@ public class Game {
 		boolean zombieWon = false;
 		Turn++;
 		decrementCooldowns();
-		added = false;
 
 		for (int i = 0; i < Map.getRows(); i++)
 		{
@@ -549,358 +648,127 @@ public class Game {
 	public void updateView() {
 		View.updateView(Sun, Turn, SunFlowerCD, PeaShooterCD, CherryBombCD, WallNutCD, ChomperCD);	
 	}
+	
 	//Determines what happens when, most likely will be converted to read from a text file in the future
 	//that way it will also open up the ability for the user to create, save and edit their own levels
 	//Please note that we took a manual approach to better control the balance of the game, however, in the next
 	//iteration (Milestone 4) this will be changed heavily.
 	private void levelLogic() {
-
-		if (currentLevel == 1)
+		
+		if (Turn == 0)
 		{
-			if (Turn == 0)
+			if (currentLevel == 1)
 			{
-				SunFlowerCD = 0;
-				PeaShooterCD = 0;
-				CherryBombCD = 1000;
-				WallNutCD = 1000;
-				ChomperCD = 1000;
-				Sun = 200;
-				Turn = 0;
-				Map.ResetBoard();
-				updateView();
-				View.showMessage("Five zombies will come in the next wave, you have 3 turns to prepare");
+				level = new Level(3, 2, 5, 0, 0, 0);
 			}
-			if (!added)
+			else if (currentLevel == 2)
 			{
-				if (Turn == 3)
-				{
-					Map.addEntity(101, 0, 8);
-					added = true;
-				}
-				if (Turn == 4)
-				{
-					Map.addEntity(101, 1, 8);
-					added = true;
-				}
-				if (Turn ==  6)
-				{
-					Map.addEntity(101, 0, 8);
-					Map.addEntity(101, 4, 8);
-					added = true;
-				}
-				if (Turn == 7)
-				{
-					Map.addEntity(101, 2, 8);
-					added = true;
-				}
+				level = new Level(3, 3, 6, 2, 0, 0);
+				View.showMessage("You've Unlocked the CherryBomb to assist you against the new zombie.\n\n"
+							+ "The CherryBomb is a fragile plant that explodes after 3 turns in a 3 wide and 4 long explosion centered on the plant.\n" + 
+							"HP: 3\n" + 
+							"Defense: 1\n" + 
+							"Attack Damage: 100\n" + 
+							"Attack Range: 4 tiles across, 3 above or below\n" + 
+							"Cost: 150 sun\n\n"
+							+ "The Fast Zombie can move two blocks at once if nothing is in its way. "
+							+ "HP: 10\n" + 
+							"Defense: 1.2\n" + 
+							"Attack Damage: 3\n" + 
+							"Attack Range: 1 tiles across, 0 above or below\n" + 
+							"Value: 30 sun");
+				
 			}
-			if (Turn > 7)
+			else if (currentLevel == 3)
 			{
-				if (Map.didWin())
-				{
-					Turn = 0;
-					currentLevel = 2;
-					View.showMessage("You beat level 1!!");
-					levelLogic();
-				}
-			}
-		}
-		else if (currentLevel == 2)
-		{
-			if (Turn == 0)
-			{
-				SunFlowerCD = 0;
-				PeaShooterCD = 0;
-				CherryBombCD = 0;
-				WallNutCD = 1000;
-				ChomperCD = 1000;
-				Sun = 200;
-				Turn = 0;
-				Map.ResetBoard();
-				updateView();
-				View.showMessage("Six zombies, and two fast zombies will come in the next wave, you have 3 turns to prepare\n\nYou've Unlocked the CherryBomb to assist you against the new zombie.\n\n"
-						+ "The CherryBomb is a fragile plant that explodes after 3 turns in a 3 wide and 4 long explosion centered on the plant.\n" + 
-						"HP: 3\n" + 
-						"Defense: 1\n" + 
-						"Attack Damage: 100\n" + 
-						"Attack Range: 4 tiles across, 3 above or below\n" + 
-						"Cost: 150 sun\n\n"
-						+ "The Fast Zombie can move two blocks at once if nothing is in its way. "
-						+ "HP: 10\n" + 
-						"Defense: 1.2\n" + 
-						"Attack Damage: 3\n" + 
-						"Attack Range: 1 tiles across, 0 above or below\n" + 
-						"Value: 30 sun");
-			}
-			if (!added)
-			{
-				if (Turn == 3)
-				{
-					Map.addEntity(101, 3, 8);
-					added = true;
-				}
-				if (Turn == 4)
-				{
-					Map.addEntity(101, 1, 8);
-					added = true;
-				}
-				if (Turn == 5)
-				{
-					Map.addEntity(102, 1, 8);
-					Map.addEntity(102, 2, 8);
-					added = true;
-				}
-				if (Turn ==  6)
-				{
-					Map.addEntity(101, 0, 8);
-					Map.addEntity(101, 4, 8);
-					added = true;
-				}
-				if (Turn == 7)
-				{
-					Map.addEntity(101, 2, 8);
-					Map.addEntity(101, 0, 8);
-					added = true;
-				}
-			}
-			if (Turn > 7)
-			{
-				if (Map.didWin())
-				{
-					Turn = 0;
-					currentLevel = 3;
-					View.showMessage("You beat level 2!!");
-					levelLogic();
-				}
-			}
-		}
-		else if (currentLevel == 3)
-		{
-			if (Turn == 0)
-			{
-				SunFlowerCD = 0;
-				PeaShooterCD = 0;
-				CherryBombCD = 0;
-				WallNutCD = 0;
-				ChomperCD = 1000;
-				Sun = 200;
-				Turn = 0;
-				Map.ResetBoard();
-				updateView();
-				View.showMessage("Eight zombies, and four fast zombies will come in the next wave, you have 3 turns to prepare\n\n You've also unlocked a new type of plant!\n"
+				level = new Level(3, 4, 8, 4, 0, 0);
+				View.showMessage("You've also unlocked a new type of plant!\n"
 						+ "The WallNut is durable but can't attack. Use it to block the path of oncoming zombies!"
 						+ "\nHP: 15\n" + 
 						"Defense: 2\n" + 
 						"Attack Damage: 0\n" + 
 						"Attack Range: 0 tiles across, 0 above or below\n" + 
 						"Cost: 50 sun");
+							
 			}
-			if (!added)
+			else if (currentLevel == 4)
 			{
-				if (Turn == 3)
-				{
-					Map.addEntity(101, 3, 8);
-					added = true;
-				}
-				if (Turn == 4)
-				{
-					Map.addEntity(102, 4, 8);
-					Map.addEntity(101, 1, 8);
-					added = true;
-				}
-				if (Turn == 5)
-				{
-					Map.addEntity(102, 1, 8);
-					Map.addEntity(102, 2, 8);
-					added = true;
-				}
-				if (Turn ==  6)
-				{
-					Map.addEntity(101, 0, 8);
-					Map.addEntity(101, 4, 8);
-					added = true;
-				}
-				if (Turn == 7)
-				{
-					Map.addEntity(101, 2, 8);
-					Map.addEntity(101, 0, 8);
-					added = true;
-				}
-				if (Turn == 8)
-				{
-					Map.addEntity(101, 3, 8);
-					Map.addEntity(101, 1, 8);
-					Map.addEntity(102, 4, 8);
-				}
+				level = new Level(3, 5, 8, 3, 2, 0);
+				View.showMessage("You've unlocked the Chomper Plant to assist you with the new zombie!"
+							+ "\nThe Chomper can eat a zombie in one bite! BUT, it needs time to devour it. Careful! if it gets killed while eating, its lunch might eat you!\n The Chomper is also useful for catching pole zombies mid vault!"
+							+ "\nHP: 10\n" + 
+							"Defense: 1\n" + 
+							"Attack Damage: 5\n" + 
+							"Attack Range: 1 tiles across, 0 above or below\n" + 
+							"Cost: 150 sun"
+							+ "\n\n The Pole Zombie is dangerous! Not only does it's pole do extra damage, but it can use it to jump over an isolated plant!"
+							+ "\nHP: 10\n" + 
+							"Defense: 1.2\n" + 
+							"Attack Damage: 5 (when not disarmed)\n" + 
+							"Attack Range: 1 tiles across, 0 above or below\n" + 
+							"Value: 30 sun");
 			}
-			if (Turn > 7)
+			else if (currentLevel == 5)
 			{
-				if (Map.didWin())
-				{
-					Turn = 0;
-					currentLevel = 4;
-					View.showMessage("You beat level 3!!");
-					levelLogic();
-				}
+				
+				level = new Level(5, 5, 10,4, 4, 3);
+				View.showMessage("BE CAREFUL!!!! The Giant Zombie is tough and strong!"
+							+ "\nHP: 100\n" + 
+							"Defense: 1\n" + 
+							"Attack Damage: 10\n" + 
+							"Attack Range: 1 tiles across, 0 above or below\n" + 
+							"Value: 100 sun");
+			}
+			else if (currentLevel == 6)
+			{
+				View.showMessage("You have beat the game and entered endless mode. GoodLuck!");
+				level = new Level(currentLevel);
+			}
+			else
+			{
+				level = new Level(currentLevel);
+			}
+			if (View.askToEdit())
+			{
+				int[] temp = View.getNewLevelOptions(level.getOptions());
+				level = new Level(temp[0], temp[1], temp[2], temp[3], temp[4], temp[5]);
+			}
+			
+		}
+		if (Turn == 0)
+		{
+			Integer[] turn0 = level.turn0();
+			SunFlowerCD = turn0[0];
+			PeaShooterCD = turn0[1];
+			CherryBombCD = turn0[2];
+			WallNutCD = turn0[3];
+			ChomperCD = turn0[4];
+			Sun = 200;
+			Turn = 0;
+			Map.ResetBoard();
+			updateView();
+			View.showMessage("You have "+turn0[5] + " turns to prepare.\n"
+					+ "In the next wave the following zombies will come:\n"
+					+ "\nZombies: " + turn0[6]
+					+ "\nFast Zombies: " + turn0[7]
+					+ "\nPole Zombies: " + turn0[8]
+					+ "\nGiant Zombies: " + turn0[9]); 
+		}
+		if (!level.lastAdded())
+		{
+			for (int[] ent : level.levelLogic(Turn))
+			{
+				Map.addEntity(ent[0], ent[1], ent[2]);
 			}
 		}
-		else if (currentLevel == 4)
+		else
 		{
-			if (Turn == 0)
+			if (Map.didWin())
 			{
-				SunFlowerCD = 0;
-				PeaShooterCD = 0;
-				CherryBombCD = 0;
-				WallNutCD = 0;
-				ChomperCD = 0;
-				Sun = 200;
 				Turn = 0;
-				Map.ResetBoard();
-				updateView();
-				View.showMessage("Eight zombies, three fast zombies and two pole zombies will come in the next wave, you have 3 turns to prepare\n\nYou've unlocked the Chomper Plant to assist you with the new zombie!"
-						+ "\nThe Chomper can eat a zombie in one bite! BUT, it needs time to devour it. Careful! if it gets killed while eating, its lunch might eat you!\n The Chomper is also useful for catching pole zombies mid vault!"
-						+ "\nHP: 10\n" + 
-						"Defense: 1\n" + 
-						"Attack Damage: 5\n" + 
-						"Attack Range: 1 tiles across, 0 above or below\n" + 
-						"Cost: 150 sun"
-						+ "\n\n The Pole Zombie is dangerous! Not only does it's pole do extra damage, but it can use it to jump over an isolated plant!"
-						+ "\nHP: 10\n" + 
-						"Defense: 1.2\n" + 
-						"Attack Damage: 5 (when not disarmed)\n" + 
-						"Attack Range: 1 tiles across, 0 above or below\n" + 
-						"Value: 30 sun");
-			}
-			if (!added)
-			{
-				if (Turn == 3)
-				{
-					Map.addEntity(101, 3, 8);
-					added = true;
-				}
-				if (Turn == 4)
-				{
-					Map.addEntity(103, 4, 8);
-					Map.addEntity(103, 2, 8);
-					Map.addEntity(101, 1, 8);
-					added = true;
-				}
-				if (Turn == 5)
-				{
-					Map.addEntity(102, 1, 8);
-					Map.addEntity(102, 2, 8);
-					added = true;
-				}
-				if (Turn ==  6)
-				{
-					Map.addEntity(101, 0, 8);
-					Map.addEntity(101, 4, 8);
-					added = true;
-				}
-				if (Turn == 7)
-				{
-					Map.addEntity(101, 2, 8);
-					Map.addEntity(101, 0, 8);
-					added = true;
-				}
-				if (Turn == 8)
-				{
-					Map.addEntity(101, 3, 8);
-					Map.addEntity(101, 1, 8);
-					Map.addEntity(102, 4, 8);
-				}
-			}
-			if (Turn > 7)
-			{
-				if (Map.didWin())
-				{
-					Turn = 0;
-					currentLevel = 5;
-					View.showMessage("You beat level 4!!");
-					levelLogic();
-				}
-			}
-		}
-		else if (currentLevel == 5)
-		{
-			if (Turn == 0)
-			{
-				SunFlowerCD = 0;
-				PeaShooterCD = 0;
-				CherryBombCD = 0;
-				WallNutCD = 0;
-				ChomperCD = 0;
-				Sun = 200;
-				Turn = 0;
-				Map.ResetBoard();
-				updateView();
-				View.showMessage("FINAL ROUND!!!!\n\n Ten zombies, four fast zombies four pole zombies and three Giant Zombies will come in the next wave, you have 5 turns to prepare\n"
-						+ "\n BE CAREFUL!!!! The Giant Zombie is tough and strong!"
-						+ "\nHP: 100\n" + 
-						"Defense: 1\n" + 
-						"Attack Damage: 10\n" + 
-						"Attack Range: 1 tiles across, 0 above or below\n" + 
-						"Value: 100 sun");
-			}
-			if (!added)
-			{
-				if (Turn == 5)
-				{
-					Map.addEntity(101, 3, 8);
-					Map.addEntity(101, 1, 8);
-					added = true;
-				}
-				if (Turn == 6)
-				{
-					Map.addEntity(103, 4, 8);
-					Map.addEntity(103, 2, 8);
-					Map.addEntity(101, 1, 8);
-					added = true;
-				}
-				if (Turn == 7)
-				{
-					Map.addEntity(102, 1, 8);
-					Map.addEntity(102, 2, 8);
-					Map.addEntity(101, 4, 8);
-					added = true;
-				}
-				if (Turn ==  8)
-				{
-					Map.addEntity(101, 0, 8);
-					Map.addEntity(104, 2, 8);
-					Map.addEntity(101, 4, 8);
-					added = true;
-				}
-				if (Turn == 9)
-				{
-					Map.addEntity(101, 2, 8);
-					Map.addEntity(104, 3, 8);
-					Map.addEntity(101, 0, 8);
-					added = true;
-				}
-				if (Turn == 10)
-				{
-					Map.addEntity(101, 3, 8);
-					Map.addEntity(101, 1, 8);
-					Map.addEntity(102, 4, 8);
-				}
-				if (Turn == 11)
-				{
-					Map.addEntity(102, 0, 8);
-					Map.addEntity(104, 3, 8);
-					Map.addEntity(103, 4, 8);
-					Map.addEntity(103, 2, 8);
-				}
-			}
-			if (Turn > 11)
-			{
-				if (Map.didWin())
-				{
-					Turn = 0;
-					currentLevel = 0;
-					View.showMessage("You beat the game!! Press ok to restart");
-					levelLogic();
-				}
+				View.showMessage("You beat level "+currentLevel+"!!");
+				currentLevel++;
+				levelLogic();
 			}
 		}
 		

@@ -1,7 +1,11 @@
 package Model;
 
 public class GiantZombie extends Entity {
-	//constructor
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+		//constructor
 		public GiantZombie()
 		{
 			//Giant Zombie stats:

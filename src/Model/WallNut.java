@@ -1,6 +1,10 @@
 package Model;
 //The WallNut class
 public class WallNut extends Entity {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//Constructor
 	public WallNut()
 	{

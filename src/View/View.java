@@ -5,6 +5,11 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.*;
@@ -17,10 +22,16 @@ import Model.TileMap;
 //Author: Omar Azam
 //EDIT: Made changes for milestone 2
 public class View extends JFrame{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//The actual model that the view is displaying
 	private TileMap currentMap;
 	private JButton[][] buttonMap;
 	private JButton[] plantsMenu;
+	private JMenuItem saveMenuItem;
+	private JMenuItem loadMenuItem;
 	private JLabel infoLabel;
 	public State state;
 	public enum State {
@@ -42,6 +53,24 @@ public class View extends JFrame{
 	//
 	private void setupGUI() {
 	
+		JMenuBar menubar = new JMenuBar();
+
+        JMenu fileMenu = new JMenu("File");
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+
+        saveMenuItem = new JMenuItem("Save");
+        saveMenuItem.setMnemonic(KeyEvent.VK_S);
+        saveMenuItem.setToolTipText("Save current progress");
+        
+        loadMenuItem = new JMenuItem("Load");
+        loadMenuItem.setMnemonic(KeyEvent.VK_L);
+        loadMenuItem.setToolTipText("Load save file");
+
+        fileMenu.add(saveMenuItem);
+        fileMenu.add(loadMenuItem);
+        menubar.add(fileMenu);
+
+        setJMenuBar(menubar);
 		//The Bar where you can end turn and select the plant to plant
 		JPanel topPanel = new JPanel();
 		//The actual map and stuff
@@ -261,7 +290,14 @@ public class View extends JFrame{
 	{
 		plantsMenu[currentMap.getColumns()-3].addActionListener(listener);
 	}
-	
+	public void addSaveListener(ActionListener listener)
+	{
+		saveMenuItem.addActionListener(listener);
+	}
+	public void addLoadListener(ActionListener listener)
+	{
+		loadMenuItem.addActionListener(listener);
+	}
 	//Prints the Map to the Console, Figure out a nice way to display each entity
 	//Assume all entities have the method getDisplay() that in this milestone will
 	//Return a char, representing what they look like.
@@ -332,6 +368,77 @@ public class View extends JFrame{
 	{
 		JOptionPane.showMessageDialog(this, message);
 	}
+	public boolean askToEdit()
+	{
+		boolean retVal= false;
+		int selectedOption = JOptionPane.showConfirmDialog(null, 
+                "Would You Like to edit the level before starting?\nYou will only get once chance per level", 
+                "Notice", 
+                JOptionPane.YES_NO_OPTION); 
+		
+		if (selectedOption == JOptionPane.YES_OPTION) {
+	    	retVal = true;
+		}
+		
+		return retVal;
+	}
+	
+	public int[] getNewLevelOptions(int[] currentOptions)
+	{
+		int[] retVal = new int[currentOptions.length];
+		
+		JTextField gracePeriod = new JTextField();
+		JTextField enabledPlants = new JTextField();
+		JTextField zombies = new JTextField();
+		JTextField fastZombies = new JTextField();
+		JTextField poleZombies = new JTextField();
+		JTextField giantZombies = new JTextField();
+		
+		gracePeriod.setText( "" + currentOptions[0]);
+		enabledPlants.setText( "" + currentOptions[1]);
+		zombies.setText( "" + currentOptions[2]);
+		fastZombies.setText( "" + currentOptions[3]);
+		poleZombies.setText( "" + currentOptions[4]);
+		giantZombies.setText( "" + currentOptions[5]);
+
+		final JComponent[] inputs = new JComponent[] {
+		        new JLabel("Grace Period:"),
+		        gracePeriod,
+		        new JLabel("enabled plants(1-5):"),
+		        enabledPlants,
+		        new JLabel("Normal Zombies:"),
+		        zombies,
+		        new JLabel("Fast Zombies:"),
+		        fastZombies,
+		        new JLabel("Pole Zombies:"),
+		        poleZombies,
+		        new JLabel("Giant Zombies:"),
+		        giantZombies,
+		        
+		};
+		int result = JOptionPane.showConfirmDialog(null, inputs, "Level Editor", JOptionPane.PLAIN_MESSAGE);
+		if (result == JOptionPane.OK_OPTION) {
+			if (tryParseInt(gracePeriod.getText()) && tryParseInt(enabledPlants.getText()) && tryParseInt(zombies.getText()) 
+					&& tryParseInt(fastZombies.getText()) && tryParseInt(poleZombies.getText()) && tryParseInt(giantZombies.getText()))
+			{
+				retVal[0] = Integer.parseInt(gracePeriod.getText());
+				retVal[1] = Integer.parseInt(enabledPlants.getText());
+				retVal[2] = Integer.parseInt(zombies.getText());
+				retVal[3] = Integer.parseInt(fastZombies.getText());
+				retVal[4] = Integer.parseInt(poleZombies.getText());
+				retVal[5] = Integer.parseInt(giantZombies.getText());
+			}
+			else
+			{
+				showMessage("Your input was not in the right format, using original level");
+			}
+		} else {
+		    showMessage("edit canceled / closed using original level");
+		    retVal = currentOptions;
+		}
+		
+		return retVal;
+	}
 	//Animation/Sprite related methods
 	private ImageIcon getSprite(String identifier) {
 		//This swaps the image, currently setup to only work with the tile files
@@ -345,8 +452,6 @@ public class View extends JFrame{
 		Thread r = new Thread() {
 			public void run()
 			{
-				//gets the original icon for switching back to
-				Icon original = getSprite(identifiers[0]);
 				//uses a for loop to go through each image and pauses for 1/4th second on it (AKA. 4fps)
 				for (int i = 1; i < identifiers.length; i++)
 				{
@@ -390,4 +495,31 @@ public class View extends JFrame{
 		plantsMenu[5].setEnabled(val);
 	}
 
+	boolean tryParseInt(String value) {  
+	     try {  
+	         Integer.parseInt(value);  
+	         return true;  
+	      } catch (NumberFormatException e) {  
+	         return false;  
+	      }  
+	}
+	public String getSaveFile() {
+		String name = JOptionPane.showInputDialog(this, "Please type in a name for this save");
+		return name;
+	}
+	public InputStream chooseFile() {
+		InputStream retVal = null;
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir") + "/saves/"));
+		
+
+		if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+			try {
+				retVal = new FileInputStream(fileChooser.getSelectedFile());
+			} catch (FileNotFoundException e) {
+				
+			}
+		}
+		return retVal;
+	}
 }

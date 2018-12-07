@@ -3,6 +3,10 @@ package Model;
 //The PeaShooter Class
 //Author: Hamna Nimra
 public class SunFlower extends Entity {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//boolean for determining whether or not it already soaked
 	private boolean soaked;
 	//Constructor

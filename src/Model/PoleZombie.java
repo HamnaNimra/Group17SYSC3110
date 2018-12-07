@@ -1,6 +1,11 @@
 package Model;
 
 public class PoleZombie extends Entity {
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	boolean disarmed;
 	//constructor
 	public PoleZombie()
@@ -31,6 +36,12 @@ public class PoleZombie extends Entity {
 		retVal.setColumn(this.getColumn());
 		retVal.setRow(this.getRow());
 		return retVal;
+	}
+	public boolean isDisarmed() {
+		return disarmed;
+	}
+	public void setDisarmed(boolean disarmed) {
+		this.disarmed = disarmed;
 	}
 	@Override
 	public String getDisplay()

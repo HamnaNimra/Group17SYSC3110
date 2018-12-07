@@ -1,6 +1,10 @@
 package Model;
 
 public class FastZombie extends Entity {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//constructor
 	public FastZombie()
 	{

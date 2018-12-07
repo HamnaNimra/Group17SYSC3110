@@ -3,6 +3,10 @@ package Model;
 //The PeaShooter Class
 //Author: Hamna Nimra
 public class Zombie extends Entity {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//constructor
 	public Zombie()
 	{

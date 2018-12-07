@@ -1,11 +1,17 @@
 package Model;
 
+import java.io.Serializable;
+
 //The Entity Class
 //The parent for all children entities, this class is only instantiated for blank spaces
 //all other Entities will be children of this class
 //Author: Hamna Nimra
-public class Entity {
+public class Entity implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	//Entity information
 	private float health;
 	private float defense;

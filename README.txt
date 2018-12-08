@@ -13,6 +13,8 @@ Version 3.1.1
 Added 5 levels, added undo/redo, added CherryBomb, WallNut, Chomper, Fast Zombie, Pole zombie, and giant Zombie entities.
 Version 3.1.2
 We forgot to add the descriptions of the plants and zombies
+Version 4.1.1
+Added save/load and level editor, aswell as executable jar
 README Author and all supporting diagrams author: Manel Oudjida
 
 This is the overview of game mechanics. Feel free to add more just make sure you update the version like i did at the top.
@@ -21,6 +23,8 @@ All versions 1.x.y is for the first milestone. Increase Y if only minor changes 
 */
 
 How To Play:
+To start the game simply run the PlantsVsZombiesExecutable.jar from the GROUP17SYSC3310 folder.
+
 The game consists of two types of plants, the sunflower and the peashooter. The objective is to fend off hordes of zombies using your plants.
 
 The SunFlower:
@@ -189,4 +193,8 @@ Design Changes in Milestone 3 explanations:
 	the TileMap and Entity classes all got some nifty methods for clonely, namely, Entity.clone() and TileMap.cloneBoard(). These were made in order to
 	ensure that saved states weren't saved references to the objects.
 
-
+Design Changed in Mileston 4 explanations:
+	We changed the level system to randomly choose spawn location and times of zombies, but to use manually defined amounts of zombies. This is reflected
+	in the level editor where you can choose the amount of zombies for a level before starting. The save/load feature uses a folder called saves in the
+	working directory in order to store saved files. The reason we did this was to make it easier to implement the level editor, rather than getting the user
+	to manually enter turns, and positions.

@@ -336,7 +336,7 @@ public class Game {
 		}
 		
 	}
-	public void save() throws IOException
+	private void save() throws IOException
 	{
 		ArrayList<Stack<Object[]>> stacks = new ArrayList<Stack<Object[]>>();
 		stacks.add(actionStack);
